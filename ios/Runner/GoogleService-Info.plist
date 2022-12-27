@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>676988167299-ar5ml7qg9nmj9dvbs1ssi5o67d29piao.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.676988167299-ar5ml7qg9nmj9dvbs1ssi5o67d29piao</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCRRudiy9bpiTNdPyacmdnF7PwN82_N780</string>
+	<key>GCM_SENDER_ID</key>
+	<string>676988167299</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.ttrailLaptopo</string>
+	<key>PROJECT_ID</key>
+	<string>ttrail-3c6a9</string>
+	<key>STORAGE_BUCKET</key>
+	<string>ttrail-3c6a9.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:676988167299:ios:ad9ef8e0e6a7151acb27b6</string>
+	<key>DATABASE_URL</key>
+	<string>https://ttrail-3c6a9-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>

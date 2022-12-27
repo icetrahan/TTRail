@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 //Theme
 
@@ -13,7 +15,7 @@ Color appDarkGrey = const Color.fromARGB(255, 55, 55, 55);
 
 TextStyle header1 = TextStyle(
   color: appBlack,
-  fontSize: buttonHeight * 0.6,
+  fontSize: buttonHeight * 0.40,
   fontWeight: FontWeight.w700,
   fontFamily: 'DMSans',
 );
@@ -37,6 +39,56 @@ TextStyle bodyText1 = TextStyle(
   fontSize: buttonHeight * 0.3,
   fontFamily: 'DMSans',
 );
+
+//Informational Variables
+
+String btRecievedData = '';
+
+//Firebase Variables
+
+List<String> locationsList = [];
+Map<String, dynamic> data = {};
+
+String locationAddress = '';
+String locationName = '';
+String locationZoom = '';
+String locationLat = '';
+String locationLong = '';
+
+//Methods
+
+locationsGet() async {
+  locationsList.clear();
+
+  final snap = await FirebaseFirestore.instance.collection("locations").get();
+  final List<DocumentSnapshot> locationsSnap = snap.docs;
+  for (var location in locationsSnap) {
+    locationsList.add(location.id);
+  }
+
+  locationsList.forEach((element) {
+    print(element);
+  });
+}
+
+locationsDataGet(selected) async {
+  final snap = await FirebaseFirestore.instance
+      .collection("locations")
+      .doc(selected)
+      .get();
+  final Map<String, dynamic>? selectedSnap = snap.data();
+
+  locationAddress = selectedSnap?['address'];
+  locationLat = selectedSnap?['lat'];
+  locationLong = selectedSnap?['long'];
+  locationZoom = selectedSnap?['zoom'];
+  locationName = selected;
+
+  print(locationName);
+  print(locationAddress);
+  print(locationLat);
+  print(locationLong);
+}
 
 //Screen Size Getter
 

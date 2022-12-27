@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:ttrail_laptopo/globals.dart' as globals;
+import 'package:ttrail_laptopo/mapcreation.dart' as mc;
 
-const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
-
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+bool locationSelected = false;
+
+class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     globals.SizeConfig().init(context);
@@ -26,8 +32,8 @@ class Home extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   //Drop Down for location select
-                  Text("Location", style: globals.header1),
-                  SizedBox(width: globals.buttonWidth * 0.5),
+                  Text("Location:", style: globals.header1),
+                  SizedBox(width: globals.buttonWidth * 0.2),
                   const LocationDropdown(),
                 ],
               ),
@@ -36,7 +42,11 @@ class Home extends StatelessWidget {
               //Container 1
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/newinsp');
+                  if (locationSelected == true) {
+                    Navigator.pushNamed(context, '/newinsp');
+                  } else {
+                    _notSelected(context);
+                  }
                 },
                 child: Container(
                   height: 150,
@@ -62,7 +72,11 @@ class Home extends StatelessWidget {
               //Container 2
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/insps');
+                  if (locationSelected == true) {
+                    Navigator.pushNamed(context, '/insps');
+                  } else {
+                    _notSelected(context);
+                  }
                 },
                 child: Container(
                   height: 150,
@@ -84,7 +98,11 @@ class Home extends StatelessWidget {
               //Container 3
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/map');
+                  if (locationSelected == true) {
+                    Navigator.pushNamed(context, '/map');
+                  } else {
+                    _notSelected(context);
+                  }
                 },
                 child: Container(
                   height: 150,
@@ -110,7 +128,7 @@ class Home extends StatelessWidget {
               //Container 4
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/test');
+                  mc.getPoints(globals.locationName);
                 },
                 child: Container(
                   height: 150,
@@ -144,31 +162,78 @@ class LocationDropdown extends StatefulWidget {
 }
 
 class _LocationDropdownState extends State<LocationDropdown> {
-  String dropdownValue = list.first;
+  String? dropdownValue = null;
 
   @override
   Widget build(BuildContext context) {
     return DropdownButton<String>(
       value: dropdownValue,
+      hint: Text(
+        'Select Location',
+        style: TextStyle(
+          fontSize: globals.buttonHeight * 0.35,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'DMSans',
+        ),
+      ),
+      onTap: () async {
+        await globals.locationsGet();
+      },
       icon: const Icon(Icons.arrow_downward),
       elevation: 16,
-      style: globals.bodyText1,
+      focusColor: globals.appOffWhite,
       underline: Container(
-        height: 2,
+        height: globals.buttonHeight * 0.03,
         color: globals.logoOrange,
       ),
       onChanged: (String? value) {
-        // This is called when the user selects an item.
+        globals.locationsDataGet(value);
+        locationSelected = true;
         setState(() {
           dropdownValue = value!;
         });
       },
-      items: list.map<DropdownMenuItem<String>>((String value) {
+      items:
+          globals.locationsList.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
-          child: Text(value),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: globals.buttonHeight * 0.35,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'DMSans',
+            ),
+          ),
         );
       }).toList(),
     );
   }
+}
+
+Future<void> _notSelected(context) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Select a Location'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: const <Widget>[
+              Text('You must select a location to continue'),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Ok'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
 }
