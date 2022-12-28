@@ -128,7 +128,7 @@ class _HomeState extends State<Home> {
               //Container 4
               GestureDetector(
                 onTap: () {
-                  mc.getPoints(globals.locationName);
+                  mc.getPoints();
                 },
                 child: Container(
                   height: 150,

@@ -54,6 +54,9 @@ String locationName = '';
 String locationZoom = '';
 String locationLat = '';
 String locationLong = '';
+String locationTracksCollection = '';
+
+Map<String, dynamic> tracksMap = {};
 
 //Methods
 
@@ -82,12 +85,14 @@ locationsDataGet(selected) async {
   locationLat = selectedSnap?['lat'];
   locationLong = selectedSnap?['long'];
   locationZoom = selectedSnap?['zoom'];
+  locationTracksCollection = selectedSnap?['tracksId'];
   locationName = selected;
 
   print(locationName);
   print(locationAddress);
   print(locationLat);
   print(locationLong);
+  print(locationTracksCollection);
 }
 
 //Screen Size Getter
