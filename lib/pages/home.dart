@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ttrail_laptopo/globals.dart' as globals;
 import 'package:ttrail_laptopo/mapcreation.dart' as mc;
+import 'handbook.dart' as hb;
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -22,132 +23,176 @@ class _HomeState extends State<Home> {
           backgroundColor: globals.logoOrange,
           title: Text('TT Rail', style: globals.header1),
         ),
-        body: SizedBox(
-          height: double.infinity,
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        body: Stack(
+          children: [
+            SizedBox(
+              height: double.infinity,
+              width: double.infinity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  //Drop Down for location select
-                  Text("Location:", style: globals.header1),
-                  SizedBox(width: globals.buttonWidth * 0.2),
-                  const LocationDropdown(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      //Drop Down for location select
+                      Text("Location:", style: globals.header1),
+                      SizedBox(width: globals.buttonWidth * 0.2),
+                      const LocationDropdown(),
+                    ],
+                  ),
+
+                  SizedBox(height: globals.buttonHeight * 0.2),
+                  //Container 1
+                  GestureDetector(
+                    onTap: () {
+                      if (locationSelected == true) {
+                        _inspSelection(context);
+                      } else {
+                        _notSelected(context);
+                      }
+                    },
+                    child: Container(
+                      height: 150,
+                      width: 150,
+                      decoration: BoxDecoration(
+                        color: globals.logoOrange,
+                        border: Border.all(color: globals.logoOrange, width: 3),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(18)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.content_paste_search_outlined,
+                              size: 80),
+                          Text(
+                            'New Inspection',
+                            textAlign: TextAlign.center,
+                            style: globals.header2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  //Container 2
+                  GestureDetector(
+                    onTap: () {
+                      if (locationSelected == true) {
+                        // Navigator.pushNamed(context, '/insps');
+                        globals.dataWriteSegment(
+                          '1',
+                          '1',
+                          '56.75',
+                          '1',
+                          '57',
+                          'Track will need repairs soon',
+                          'Caleb L Trahan',
+                          'Track 400',
+                          '14',
+                          'class1',
+                        );
+                      } else {
+                        _notSelected(context);
+                      }
+                    },
+                    child: Container(
+                      height: 150,
+                      width: 150,
+                      decoration: BoxDecoration(
+                        color: globals.logoOrange,
+                        border: Border.all(color: globals.logoOrange, width: 3),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(18)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.folder_open_outlined, size: 100),
+                          Text('Inspections',
+                              textAlign: TextAlign.center,
+                              style: globals.header2),
+                        ],
+                      ),
+                    ),
+                  ),
+                  //Container 3
+                  GestureDetector(
+                    onTap: () async {
+                      if (locationSelected == true) {
+                        globals.loading = true;
+                        await mc.getPoints(
+                            context, globals.currentDateSelection);
+                        globals.loading = false;
+                        Navigator.pushNamed(context, '/map');
+                      } else {
+                        _notSelected(context);
+                      }
+                    },
+                    child: Container(
+                      height: 150,
+                      width: 150,
+                      decoration: BoxDecoration(
+                        color: globals.logoOrange,
+                        border: Border.all(color: globals.logoOrange, width: 3),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(18)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.map_outlined, size: 100),
+                          Text(
+                            'Track Map',
+                            textAlign: TextAlign.center,
+                            style: globals.header2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  //Container 4
+                  GestureDetector(
+                    onTap: () {
+                      if (locationSelected == true) {
+                        hb.buildTiles(context);
+                        hb.getPageText();
+                        Navigator.pushNamed(context, '/handbook');
+                      } else {
+                        _notSelected(context);
+                      }
+                    },
+                    child: Container(
+                      height: 150,
+                      width: 150,
+                      decoration: BoxDecoration(
+                        color: globals.logoOrange,
+                        border: Border.all(color: globals.logoOrange, width: 3),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(18)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.menu_book_outlined, size: 100),
+                          Text('Handbook',
+                              textAlign: TextAlign.center,
+                              style: globals.header2),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-
-              SizedBox(height: globals.buttonHeight * 0.2),
-              //Container 1
-              GestureDetector(
-                onTap: () {
-                  if (locationSelected == true) {
-                    Navigator.pushNamed(context, '/newinsp');
-                  } else {
-                    _notSelected(context);
-                  }
-                },
-                child: Container(
-                  height: 150,
-                  width: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(color: Colors.green, width: 3),
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.content_paste_search_outlined,
-                          size: 100),
-                      Text(
-                        'New Inspection',
-                        style: globals.header1,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              //Container 2
-              GestureDetector(
-                onTap: () {
-                  if (locationSelected == true) {
-                    Navigator.pushNamed(context, '/insps');
-                  } else {
-                    _notSelected(context);
-                  }
-                },
-                child: Container(
-                  height: 150,
-                  width: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(color: Colors.green, width: 3),
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.folder_open_outlined, size: 100),
-                      Text('Inspections', style: globals.header1),
-                    ],
-                  ),
-                ),
-              ),
-              //Container 3
-              GestureDetector(
-                onTap: () {
-                  if (locationSelected == true) {
-                    Navigator.pushNamed(context, '/map');
-                  } else {
-                    _notSelected(context);
-                  }
-                },
-                child: Container(
-                  height: 150,
-                  width: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(color: Colors.green, width: 3),
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.map_outlined, size: 100),
-                      Text(
-                        'Track Map',
-                        style: globals.header1,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              //Container 4
-              GestureDetector(
-                onTap: () {
-                  mc.getPoints();
-                },
-                child: Container(
-                  height: 150,
-                  width: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(color: Colors.green, width: 3),
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Null', style: globals.header1),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+            globals.loading
+                ? const Opacity(
+                    opacity: 0.5,
+                    child:
+                        ModalBarrier(dismissible: false, color: Colors.black))
+                : Container(),
+            globals.loading ? globals.LoadingWidget : Container()
+          ],
         ),
       ),
     );
@@ -230,6 +275,78 @@ Future<void> _notSelected(context) async {
             child: const Text('Ok'),
             onPressed: () {
               Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Future<void> _inspSelection(context) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Select an Inspection', textAlign: TextAlign.center),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: const <Widget>[
+              Text(
+                  'Would you like to start an automatic inspection, or a manual inspection?'),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Container(
+              height: globals.buttonHeight * 0.6,
+              width: globals.buttonWidth * 3,
+              decoration: BoxDecoration(
+                color: globals.logoOrange,
+                border: Border.all(
+                    width: globals.buttonHeight * 0.05,
+                    color: globals.appDarkGrey),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Auto',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: globals.buttonHeight * 0.35,
+                ),
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.pushNamed(context, '/newinspa');
+            },
+          ),
+          TextButton(
+            child: Container(
+              height: globals.buttonHeight * 0.6,
+              width: globals.buttonWidth * 3,
+              decoration: BoxDecoration(
+                color: globals.logoOrange,
+                border: Border.all(
+                    width: globals.buttonHeight * 0.05,
+                    color: globals.appDarkGrey),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Manual',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: globals.buttonHeight * 0.35,
+                ),
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.pushNamed(context, '/newinspm');
             },
           ),
         ],
