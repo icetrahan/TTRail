@@ -73,6 +73,7 @@ TextStyle bodyText2 = TextStyle(
 //App Variables
 
 bool loading = false;
+bool bluetoothConnected = false;
 
 //Informational Variables
 
