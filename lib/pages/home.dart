@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:ttrail_laptopo/globals.dart' as globals;
 import 'package:ttrail_laptopo/mapcreation.dart' as mc;
+import '../globals.dart';
+import '../provider.dart';
 import 'handbook.dart' as hb;
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'dart:convert' show utf8;
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -17,264 +21,318 @@ class Home extends StatefulWidget {
 bool locationSelected = false;
 
 class _HomeState extends State<Home> {
+  final FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
+
   @override
   Widget build(BuildContext context) {
     globals.SizeConfig().init(context);
-
+    MyProvider myVariable = context.watch<MyProvider>();
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: globals.logoOrange,
-          title: Text('TT Rail', style: globals.header1),
-        ),
-        body: Stack(
-          children: [
-            SizedBox(
-              height: double.infinity,
-              width: double.infinity,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  SizedBox(height: globals.buttonHeight * 0.2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      //Drop Down for location select
-                      Text("Location:", style: globals.header1),
-                      SizedBox(width: globals.buttonWidth * 0.2),
-                      const LocationDropdown(),
-                    ],
-                  ),
-                  SizedBox(height: globals.buttonHeight * 0.3),
-                  Container(
-                    height: globals.buttonHeight * 2,
-                    width: globals.buttonWidth * 9,
-                    color: Color.fromARGB(255, 192, 192, 192),
-                    child: Column(
-                      children: [
-                        SizedBox(height: globals.buttonHeight * 0.1),
-                        Row(
-                          children: [
-                            globals.bluetoothConnected
-                                ? Icon(
-                                    Icons.bluetooth_connected_outlined,
-                                    color: Color.fromARGB(255, 21, 204, 27),
-                                    size: globals.buttonHeight * 0.5,
-                                  )
-                                : Icon(
-                                    Icons.bluetooth,
-                                    color: Color.fromARGB(255, 214, 23, 9),
-                                    size: globals.buttonHeight * 0.5,
-                                  ),
-                            globals.bluetoothConnected
-                                ? Text(
-                                    'Bluetooth Connected',
-                                    style: TextStyle(
-                                        fontSize: globals.buttonHeight * 0.3),
-                                  )
-                                : Text(
-                                    'Bluetooth Not Connected',
-                                    style: TextStyle(
-                                        fontSize: globals.buttonHeight * 0.3),
-                                  )
-                          ],
-                        ),
-                        globals.bluetoothConnected
-                            ? Text('Bluetooth Data Goes Here')
-                            : TextButton(
-                                onPressed: (() {}),
+          appBar: AppBar(
+            backgroundColor: globals.logoOrange,
+            title: Text('TT Rail', style: globals.header1),
+          ),
+          body: globals.userHasRole
+              ? Stack(
+                  children: [
+                    SizedBox(
+                      height: double.infinity,
+                      width: double.infinity,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          SizedBox(height: globals.buttonHeight * 0.2),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              //Drop Down for location select
+                              Text("Location:", style: globals.header1),
+                              SizedBox(width: globals.buttonWidth * 0.2),
+                              const LocationDropdown(),
+                            ],
+                          ),
+                          SizedBox(height: globals.buttonHeight * 0.3),
+                          Container(
+                            height: globals.buttonHeight * 2,
+                            width: globals.buttonWidth * 9,
+                            color: Color.fromARGB(255, 192, 192, 192),
+                            child: Column(
+                              children: [
+                                SizedBox(height: globals.buttonHeight * 0.1),
+                                Row(
+                                  children: [
+                                    myVariable.btDevice['connected']
+                                        ? Icon(
+                                            Icons.bluetooth_connected_outlined,
+                                            color: Color.fromARGB(
+                                                255, 21, 204, 27),
+                                            size: globals.buttonHeight * 0.5,
+                                          )
+                                        : Icon(
+                                            Icons.bluetooth,
+                                            color:
+                                                Color.fromARGB(255, 214, 23, 9),
+                                            size: globals.buttonHeight * 0.5,
+                                          ),
+                                    myVariable.btDevice['connected']
+                                        ? Text(
+                                            'Bluetooth Connected',
+                                            style: TextStyle(
+                                                fontSize:
+                                                    globals.buttonHeight * 0.3),
+                                          )
+                                        : Text(
+                                            'Bluetooth Not Connected',
+                                            style: TextStyle(
+                                                fontSize:
+                                                    globals.buttonHeight * 0.3),
+                                          )
+                                  ],
+                                ),
+                                myVariable.btDevice['connected']
+                                    ? Text(myVariable.btDevice['data'])
+                                    : TextButton(
+                                        onPressed: (() async {
+                                          await _bluetoothDialog(
+                                              context, myVariable);
+                                          setState(() {});
+                                        }),
+                                        child: Container(
+                                          height: globals.buttonHeight * 0.6,
+                                          width: globals.buttonWidth * 3,
+                                          decoration: BoxDecoration(
+                                            color: globals.logoOrange,
+                                            border: Border.all(
+                                                width:
+                                                    globals.buttonHeight * 0.05,
+                                                color: globals.appDarkGrey),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            'Connect',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize:
+                                                  globals.buttonHeight * 0.35,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: globals.buttonHeight * 0.4),
+                          //Container 1
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  if (locationSelected == true) {
+                                    _inspSelection(context);
+                                  } else {
+                                    _notSelected(context);
+                                  }
+                                },
                                 child: Container(
-                                  height: globals.buttonHeight * 0.6,
-                                  width: globals.buttonWidth * 3,
+                                  height: 150,
+                                  width: 150,
                                   decoration: BoxDecoration(
                                     color: globals.logoOrange,
                                     border: Border.all(
-                                        width: globals.buttonHeight * 0.05,
-                                        color: globals.appDarkGrey),
-                                    borderRadius: BorderRadius.circular(12),
+                                        color: globals.logoOrange, width: 3),
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(18)),
                                   ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    'Connect',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: globals.buttonHeight * 0.35,
-                                    ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                          Icons.content_paste_search_outlined,
+                                          size: 80),
+                                      Text(
+                                        'New Inspection',
+                                        textAlign: TextAlign.center,
+                                        style: globals.header2,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
+                              //Container 2
+                              GestureDetector(
+                                onTap: () {
+                                  if (locationSelected == true) {
+                                    // Navigator.pushNamed(context, '/insps');
+                                    globals.dataWriteSegment(
+                                      '1',
+                                      '1',
+                                      '56.75',
+                                      '1',
+                                      '57',
+                                      'Track will need repairs soon',
+                                      'Caleb L Trahan',
+                                      'Track 400',
+                                      '14',
+                                      'class1',
+                                    );
+                                  } else {
+                                    _notSelected(context);
+                                  }
+                                },
+                                child: Container(
+                                  height: 150,
+                                  width: 150,
+                                  decoration: BoxDecoration(
+                                    color: globals.logoOrange,
+                                    border: Border.all(
+                                        color: globals.logoOrange, width: 3),
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(18)),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.folder_open_outlined,
+                                          size: 100),
+                                      Text('Inspections',
+                                          textAlign: TextAlign.center,
+                                          style: globals.header2),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: globals.buttonHeight * 0.35),
+                          //Container 3
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  if (locationSelected == true) {
+                                    globals.loading = true;
+                                    await mc.getPoints(
+                                        context, globals.currentDateSelection);
+                                    globals.loading = false;
+                                    Navigator.pushNamed(context, '/map');
+                                  } else {
+                                    _notSelected(context);
+                                  }
+                                },
+                                child: Container(
+                                  height: 150,
+                                  width: 150,
+                                  decoration: BoxDecoration(
+                                    color: globals.logoOrange,
+                                    border: Border.all(
+                                        color: globals.logoOrange, width: 3),
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(18)),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.map_outlined, size: 100),
+                                      Text(
+                                        'Track Map',
+                                        textAlign: TextAlign.center,
+                                        style: globals.header2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              //Container 4
+                              GestureDetector(
+                                onTap: () {
+                                  if (locationSelected == true) {
+                                    hb.buildTiles(context);
+                                    hb.getPageText();
+                                    Navigator.pushNamed(context, '/handbook');
+                                  } else {
+                                    _notSelected(context);
+                                  }
+                                },
+                                child: Container(
+                                  height: 150,
+                                  width: 150,
+                                  decoration: BoxDecoration(
+                                    color: globals.logoOrange,
+                                    border: Border.all(
+                                        color: globals.logoOrange, width: 3),
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(18)),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.menu_book_outlined,
+                                          size: 100),
+                                      Text('Handbook',
+                                          textAlign: TextAlign.center,
+                                          style: globals.header2),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    globals.loading
+                        ? const Opacity(
+                            opacity: 0.5,
+                            child: ModalBarrier(
+                                dismissible: false, color: Colors.black))
+                        : Container(),
+                    globals.loading ? globals.LoadingWidget : Container()
+                  ],
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.report_gmailerrorred,
+                      color: globals.logoOrange,
+                      size: globals.buttonHeight * 1.3,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: globals.buttonHeight * 3.5,
+                          width: globals.buttonWidth * 9,
+                          child: Text(
+                            'You have not been given a role yet.\n\nPlease contact your system admin for help.',
+                            style: globals.header1,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: globals.buttonHeight * 0.4),
-                  //Container 1
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          if (locationSelected == true) {
-                            _inspSelection(context);
-                          } else {
-                            _notSelected(context);
-                          }
-                        },
-                        child: Container(
-                          height: 150,
-                          width: 150,
-                          decoration: BoxDecoration(
-                            color: globals.logoOrange,
-                            border:
-                                Border.all(color: globals.logoOrange, width: 3),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(18)),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.content_paste_search_outlined,
-                                  size: 80),
-                              Text(
-                                'New Inspection',
-                                textAlign: TextAlign.center,
-                                style: globals.header2,
-                              ),
-                            ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: globals.buttonHeight * 1.5,
+                          width: globals.buttonWidth * 9,
+                          child: Text(
+                            'We do this to protect sensitive information.\n\nThank you for understanding.',
+                            style: globals.header3,
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                      ),
-                      //Container 2
-                      GestureDetector(
-                        onTap: () {
-                          if (locationSelected == true) {
-                            // Navigator.pushNamed(context, '/insps');
-                            globals.dataWriteSegment(
-                              '1',
-                              '1',
-                              '56.75',
-                              '1',
-                              '57',
-                              'Track will need repairs soon',
-                              'Caleb L Trahan',
-                              'Track 400',
-                              '14',
-                              'class1',
-                            );
-                          } else {
-                            _notSelected(context);
-                          }
-                        },
-                        child: Container(
-                          height: 150,
-                          width: 150,
-                          decoration: BoxDecoration(
-                            color: globals.logoOrange,
-                            border:
-                                Border.all(color: globals.logoOrange, width: 3),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(18)),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.folder_open_outlined, size: 100),
-                              Text('Inspections',
-                                  textAlign: TextAlign.center,
-                                  style: globals.header2),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: globals.buttonHeight * 0.35),
-                  //Container 3
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      GestureDetector(
-                        onTap: () async {
-                          if (locationSelected == true) {
-                            globals.loading = true;
-                            await mc.getPoints(
-                                context, globals.currentDateSelection);
-                            globals.loading = false;
-                            Navigator.pushNamed(context, '/map');
-                          } else {
-                            _notSelected(context);
-                          }
-                        },
-                        child: Container(
-                          height: 150,
-                          width: 150,
-                          decoration: BoxDecoration(
-                            color: globals.logoOrange,
-                            border:
-                                Border.all(color: globals.logoOrange, width: 3),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(18)),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.map_outlined, size: 100),
-                              Text(
-                                'Track Map',
-                                textAlign: TextAlign.center,
-                                style: globals.header2,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      //Container 4
-                      GestureDetector(
-                        onTap: () {
-                          if (locationSelected == true) {
-                            hb.buildTiles(context);
-                            hb.getPageText();
-                            Navigator.pushNamed(context, '/handbook');
-                          } else {
-                            _notSelected(context);
-                          }
-                        },
-                        child: Container(
-                          height: 150,
-                          width: 150,
-                          decoration: BoxDecoration(
-                            color: globals.logoOrange,
-                            border:
-                                Border.all(color: globals.logoOrange, width: 3),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(18)),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.menu_book_outlined, size: 100),
-                              Text('Handbook',
-                                  textAlign: TextAlign.center,
-                                  style: globals.header2),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            globals.loading
-                ? const Opacity(
-                    opacity: 0.5,
-                    child:
-                        ModalBarrier(dismissible: false, color: Colors.black))
-                : Container(),
-            globals.loading ? globals.LoadingWidget : Container()
-          ],
-        ),
-      ),
+                      ],
+                    ),
+                  ],
+                )),
     );
   }
 }
@@ -435,94 +493,133 @@ Future<void> _inspSelection(context) async {
   );
 }
 
-Future<void> _bluetoothDialog(context) async {
+Future<void> _bluetoothDialog(context, MyProvider mypro) async {
   return showDialog<void>(
-    context: context,
-    barrierDismissible: false, // user must tap button!
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Pair a Track Device', textAlign: TextAlign.center),
-        content: RefreshIndicator(
-          onRefresh: () => FlutterBluePlus.instance
-              .startScan(timeout: const Duration(seconds: 4)),
-          child: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                StreamBuilder<List<BluetoothDevice>>(
-                  stream: Stream.periodic(const Duration(seconds: 2)).asyncMap(
-                      (_) => FlutterBluePlus.instance.connectedDevices),
-                  initialData: const [],
-                  builder: (c, snapshot) => Column(
-                    children: snapshot.data!
-                        .map((d) => ListTile(
-                              title: Text(d.name),
-                              subtitle: Text(d.id.toString()),
-                              trailing: StreamBuilder<BluetoothDeviceState>(
-                                stream: d.state,
-                                initialData: BluetoothDeviceState.disconnected,
-                                builder: (c, snapshot) {
-                                  if (snapshot.data ==
-                                      BluetoothDeviceState.connected) {
-                                    return ElevatedButton(
-                                      child: const Text('OPEN'),
-                                      onPressed: () => Navigator.of(context)
-                                          .push(MaterialPageRoute(
-                                              builder: (context) =>
-                                                  DeviceScreen(device: d))),
-                                    );
-                                  }
-                                  return Text(snapshot.data.toString());
-                                },
-                              ),
-                            ))
-                        .toList(),
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Pair a Track Device',
+                  textAlign: TextAlign.center),
+              content: RefreshIndicator(
+                onRefresh: () => FlutterBluePlus.instance
+                    .startScan(timeout: const Duration(seconds: 4)),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
+                      StreamBuilder<List<BluetoothDevice>>(
+                        stream: Stream.periodic(const Duration(seconds: 2))
+                            .asyncMap((_) =>
+                                FlutterBluePlus.instance.connectedDevices),
+                        initialData: const [],
+                        builder: (c, snapshot) => Column(
+                          children: snapshot.data!
+                              .map((d) => ListTile(
+                                    title: Text(d.name),
+                                    subtitle: Text(d.id.toString()),
+                                    trailing:
+                                        StreamBuilder<BluetoothDeviceState>(
+                                      stream: d.state,
+                                      initialData:
+                                          BluetoothDeviceState.disconnected,
+                                      builder: (c, snapshot) {
+                                        if (snapshot.data ==
+                                            BluetoothDeviceState.connected) {
+                                          // myVariable.btDevice['connected'] = true;
+                                          // print(btDevice['connected']);
+                                          return ElevatedButton(
+                                              child: const Text('Select'),
+                                              onPressed: () async {
+                                                mypro.btDevice['connected'] =
+                                                    true;
+                                                globals.currentBTDevice = d;
+                                                mypro.btDevice['services'] =
+                                                    await d.discoverServices();
+
+                                                print(
+                                                    mypro.btDevice['services']);
+                                                mypro.btDevice['services']
+                                                    .forEach((service) {
+                                                  debugPrint(
+                                                      '0x${service.uuid.toString().toUpperCase().substring(4, 8)}');
+                                                  if ('0x${service.uuid.toString().toUpperCase().substring(4, 8)}' ==
+                                                      '0xFFE0') {
+                                                    service.characteristics
+                                                        .forEach(
+                                                            (characteristic) {
+                                                      debugPrint(
+                                                          '0x${characteristic.uuid.toString().toUpperCase().substring(4, 8)}');
+                                                      if ('0x${characteristic.uuid.toString().toUpperCase().substring(4, 8)}' ==
+                                                          '0xFFE1') {
+                                                        debugPrint('it works');
+                                                        globals.bluetoothChar =
+                                                            characteristic;
+                                                      }
+                                                    });
+                                                  }
+                                                });
+                                                Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            DeviceScreen(
+                                                                device: d)));
+                                              });
+                                        }
+                                        return Text(snapshot.data.toString());
+                                      },
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                      StreamBuilder<List<ScanResult>>(
+                        stream: FlutterBluePlus.instance.scanResults,
+                        initialData: const [],
+                        builder: (c, snapshot) => Column(
+                          children: snapshot.data!
+                              .map(
+                                (r) => ScanResultTile(
+                                  result: r,
+                                  onTap: () => Navigator.of(context).push(
+                                      MaterialPageRoute(builder: (context) {
+                                    r.device.connect();
+                                    return DeviceScreen(device: r.device);
+                                  })),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                StreamBuilder<List<ScanResult>>(
-                  stream: FlutterBluePlus.instance.scanResults,
-                  initialData: const [],
-                  builder: (c, snapshot) => Column(
-                    children: snapshot.data!
-                        .map(
-                          (r) => ScanResultTile(
-                            result: r,
-                            onTap: () => Navigator.of(context)
-                                .push(MaterialPageRoute(builder: (context) {
-                              r.device.connect();
-                              return DeviceScreen(device: r.device);
-                            })),
-                          ),
-                        )
-                        .toList(),
-                  ),
+              ),
+              actions: <Widget>[
+                StreamBuilder<bool>(
+                  stream: FlutterBluePlus.instance.isScanning,
+                  initialData: false,
+                  builder: (c, snapshot) {
+                    if (snapshot.data!) {
+                      return FloatingActionButton(
+                        child: const Icon(Icons.stop),
+                        onPressed: () => FlutterBluePlus.instance.stopScan(),
+                        backgroundColor: Colors.red,
+                      );
+                    } else {
+                      return FloatingActionButton(
+                          child: const Icon(Icons.search),
+                          onPressed: () => FlutterBluePlus.instance
+                              .startScan(timeout: const Duration(seconds: 4)));
+                    }
+                  },
                 ),
               ],
-            ),
-          ),
-        ),
-        actions: <Widget>[
-          StreamBuilder<bool>(
-            stream: FlutterBluePlus.instance.isScanning,
-            initialData: false,
-            builder: (c, snapshot) {
-              if (snapshot.data!) {
-                return FloatingActionButton(
-                  child: const Icon(Icons.stop),
-                  onPressed: () => FlutterBluePlus.instance.stopScan(),
-                  backgroundColor: Colors.red,
-                );
-              } else {
-                return FloatingActionButton(
-                    child: const Icon(Icons.search),
-                    onPressed: () => FlutterBluePlus.instance
-                        .startScan(timeout: const Duration(seconds: 4)));
-              }
-            },
-          ),
-        ],
-      );
-    },
-  );
+            );
+          },
+        );
+      });
 }
 
 class DeviceScreen extends StatelessWidget {
@@ -877,7 +974,11 @@ class CharacteristicTile extends StatelessWidget {
       stream: characteristic.value,
       initialData: characteristic.lastValue,
       builder: (c, snapshot) {
-        final value = snapshot.data;
+        late List<int> snapData = [];
+        snapshot.data?.forEach((element) {
+          snapData.add(element);
+        });
+        final List<int> value = snapData;
         return ExpansionTile(
           title: ListTile(
             title: Column(
@@ -891,7 +992,7 @@ class CharacteristicTile extends StatelessWidget {
                         color: Theme.of(context).textTheme.caption?.color))
               ],
             ),
-            subtitle: Text(value.toString()),
+            subtitle: Text(utf8.decode(value)),
             contentPadding: const EdgeInsets.all(0.0),
           ),
           trailing: Row(

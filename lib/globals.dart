@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:syncfusion_flutter_maps/maps.dart';
 import 'package:ttrail_laptopo/pages/handbook.dart';
 import 'dart:math';
@@ -11,8 +12,9 @@ import 'dart:math';
 Color logoOrange = Color.fromARGB(255, 239, 114, 4);
 Color logoGrey = const Color.fromARGB(255, 100, 100, 100);
 Color appBlack = const Color.fromARGB(255, 15, 15, 15);
-Color appWhite = const Color.fromARGB(255, 236, 233, 228);
+Color appWhite = Color.fromARGB(255, 255, 255, 255);
 Color appOffWhite = const Color.fromARGB(255, 216, 216, 216);
+Color appLightGrey = Color.fromARGB(255, 160, 160, 160);
 Color appGrey = const Color.fromARGB(255, 103, 103, 103);
 Color appDarkGrey = const Color.fromARGB(255, 55, 55, 55);
 
@@ -47,6 +49,13 @@ TextStyle header4 = TextStyle(
 TextStyle header5 = TextStyle(
   color: appBlack,
   fontSize: buttonHeight * 0.26,
+  fontWeight: FontWeight.w700,
+  fontFamily: 'DMSans',
+);
+
+TextStyle header6 = TextStyle(
+  color: appWhite,
+  fontSize: buttonHeight * 0.3,
   fontWeight: FontWeight.w700,
   fontFamily: 'DMSans',
 );
@@ -105,6 +114,52 @@ Center LoadingWidget = Center(
     width: buttonWidth * 3.5,
   ),
 );
+
+//User
+
+bool savePass = false;
+String userId = '';
+String userFullName = '';
+String userEmail = '';
+String userRole = '';
+bool userHasRole = false;
+bool userHasRoleUser = false;
+List<Map> usersList = [];
+List idList = [];
+
+class UserDatabaseManager {
+  final CollectionReference userListFB =
+      FirebaseFirestore.instance.collection('Users');
+
+  Future<void> createUserData(String email, String name, String uid) async {
+    return await userListFB.doc(uid).set({
+      'email': email,
+      'name': name,
+      'role': '',
+      'id': uid,
+    });
+  }
+
+  Future getUsersList() async {
+    try {
+      await userListFB.get().then((QuerySnapshot querySnapshot) {
+        querySnapshot.docs.forEach((user) {
+          Map tempMap = {
+            'id': user["id"],
+            "email": user["email"],
+            'name': user["name"],
+            'role': user["role"],
+          };
+          usersList.add(tempMap);
+          idList.add(user["id"]);
+        });
+      });
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+}
 
 //Methods
 
@@ -341,3 +396,14 @@ Map trackClasses = {
     'maxRailEndMismatchGage': 0.125,
   }
 };
+
+//////
+Map btDevice = {
+  'name': 'N/A',
+  'data': 'N/A',
+  'connected': false,
+};
+
+late BluetoothDevice currentBTDevice;
+late BluetoothCharacteristic bluetoothChar;
+String bluetoothData = '';
